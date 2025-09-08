@@ -17,7 +17,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled false
+            isMinifyEnabled = false
             // Add proguard rules later if desired
         }
         debug {
