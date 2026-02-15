@@ -4,284 +4,184 @@ SNDCPY is a Wi-Fi based Android remote control server inspired by scrcpy.
 
 This repository contains the Android server component responsible for:
 
-Screen streaming
-
-Audio streaming
-
-Remote input injection
-
-Secure pairing
-
-Local network discovery
-
-Telemetry reporting
+- Screen streaming
+- Audio streaming (planned)
+- Remote input injection
+- Secure pairing (planned)
+- Local network discovery
+- Telemetry reporting (planned)
 
 The goal is to build a production-grade, low-latency remote control system designed with modular architecture and long-term scalability in mind.
 
-Project Objectives
+## Project Objectives
 
-Low-latency video streaming
+- Low-latency video streaming
+- Secure authenticated remote control
+- Modular internal architecture
+- Clean separation of responsibilities
+- Production-ready foundation (not a prototype)
+- Deterministic build system
+- CI-ready repository
 
-Secure authenticated remote control
-
-Modular internal architecture
-
-Clean separation of responsibilities
-
-Production-ready foundation (not a prototype)
-
-Deterministic build system
-
-CI-ready repository
-
-System Architecture
+## System Architecture
 
 The server is divided into clearly separated domain modules:
 
-app/src/main/java/com/example/remotecontrolserver/
+`app/src/main/java/com/example/remotecontrolserver/`
 
-server/ → Connection lifecycle & session management
+- `server/` → Connection lifecycle & session management
+- `streaming/` → Video encoding/streaming prototype pipeline
+- `input/` → Basic input command handling
+- `discovery/` → Local network discovery prototype
+- `runtime/` → Wiring and lifecycle orchestration
+- `security/` → Pairing & encryption (**planned**)
+- `telemetry/` → Device metrics & system stats (**planned**)
 
-streaming/ → Video & audio encoding pipeline
+Each module remains isolated and communicates through defined boundaries to prevent architectural drift.
 
-input/ → Touch / keyboard injection
+## High-Level System Flow
 
-security/ → Pairing & encryption
+1. Server runtime starts on Android device.
+2. Discovery prototype advertises local IPv4 endpoints.
+3. TCP control server listens for client connections.
+4. Session is established on incoming connection.
+5. Video prototype frame loop starts.
+6. Basic input commands are accepted/rejected.
 
-telemetry/ → Device metrics & system stats
+## Networking Model
 
-Each module is designed to remain isolated and communicate through defined interfaces to prevent architectural drift.
+### Current Transport (Implemented)
 
-High-Level System Flow
+- TCP sockets (`server/TcpControlServer`)
 
-Server starts on Android device
+### Planned Future Transport
 
-Server advertises itself on local network (planned mDNS)
+- QUIC
+- Multiplexed framed transport
 
-Client discovers and connects
+### Logical Channels
 
-Secure pairing handshake
+- Control → Session + handshake
+- Video → prototype frame packets
+- Audio → planned
+- Input → remote touch / keyboard commands
+- Telemetry → planned JSON system metrics
 
-Encrypted session established
+Future upgrade targets:
 
-Continuous streaming + input loop:
+- Binary protocol
+- Frame-based message envelope
+- Back-pressure handling
 
-Screen frames encoded (MediaCodec → H.264)
-
-Audio captured (AudioRecord → AAC)
-
-Input events injected
-
-Telemetry data streamed
-
-Networking Model
-
-Initial Transport:
-
-TCP sockets
-
-Future:
-
-QUIC
-
-Multiplexed framed transport
-
-Logical Channels:
-
-Control → Session + handshake
-
-Video → H.264 encoded frames
-
-Audio → AAC encoded audio
-
-Input → Remote touch / keyboard events
-
-Telemetry → JSON system metrics
-
-Future upgrade:
-
-Binary protocol
-
-Frame-based message envelope
-
-Back-pressure handling
-
-Security Model
+## Security Model
 
 Security is mandatory.
 
+Implemented baseline:
+
+- Handshake gate on control channel (`HELLO SNDCPY`)
+
 Planned model:
 
-Pairing-based trust establishment
-
-Ephemeral session keys
-
-AES-GCM encrypted transport
-
-Device identity persistence
-
-No unauthenticated remote control
+- Pairing-based trust establishment
+- Ephemeral session keys
+- AES-GCM encrypted transport
+- Device identity persistence
+- No unauthenticated remote control
 
 Future enhancements:
 
-Key rotation
+- Key rotation
+- Mutual authentication
+- Session resume tokens
 
-Mutual authentication
+## Streaming Pipeline
 
-Session resume tokens
+### 0.3.0 Prototype
 
-Streaming Pipeline (Planned Implementation)
+Video prototype:
+
+`VideoStreamingPrototype` emits periodic `VideoFramePacket` frames to validate lifecycle and scheduling boundaries.
+
+### Planned full implementation
 
 Video pipeline:
 
-Surface
-→ MediaCodec (H.264)
-→ Packetizer
-→ Socket transport
+`Surface → MediaCodec (H.264) → Packetizer → Socket transport`
 
 Audio pipeline:
 
-AudioRecord
-→ AAC encoder
-→ Packetizer
-→ Socket transport
+`AudioRecord → AAC encoder → Packetizer → Socket transport`
 
-Planned improvements:
+## Remote Input Injection
 
-Hardware encoder preference
+### 0.3.0 Prototype Support
 
-Adaptive bitrate
+`BasicInputInjector` currently accepts:
 
-Frame skipping under load
+- `TAP`
+- `SWIPE`
+- `SCROLL`
+- `HOME`
+- `BACK`
+- `KEY:<keycode>`
 
-Delta encoding optimization
+Input injection remains restricted to authenticated sessions in planned secure versions.
 
-Remote Input Injection
+## Version Roadmap Status
 
-Planned injection mechanisms:
+### ✅ 0.1.0 (Completed)
 
-AccessibilityService
+- Clean architecture skeleton
+- Deterministic Gradle build
+- Module separation
+- CI-ready foundation
 
-Instrumentation injection
+### ✅ 0.2.0 (Completed)
 
-Native input bridge (future advanced mode)
+- Basic TCP server (`server/TcpControlServer`)
+- Local discovery prototype (`discovery/LocalDiscoveryPrototype`)
+- Session establishment (`server/SessionManager` + `server/Session`)
 
-Supported inputs:
+### ✅ 0.3.0 (Completed)
 
-Multi-touch gestures
+- Video streaming prototype (`streaming/VideoStreamingPrototype`)
+- Basic input injection (`input/BasicInputInjector`)
 
-Swipe
+### ⏳ 0.5.0 (Planned)
 
-Scroll
+- Secure pairing layer
+- Encrypted session transport
 
-Keyboard
+### ⏳ 1.0.0 (Planned)
 
-System buttons
+- Production-grade low-latency remote control server
 
-Special keys
-
-Input injection is restricted to authenticated sessions only.
-
-Telemetry
-
-The telemetry module provides:
-
-Battery level
-
-CPU temperature
-
-Memory usage
-
-Network stats
-
-Device performance indicators
-
-Telemetry is streamed independently from control data.
-
-Version Roadmap
-
-0.1.0
-
-Clean architecture skeleton
-
-Deterministic Gradle build
-
-Module separation
-
-CI-ready foundation
-
-0.2.0
-
-Basic TCP server
-
-Local discovery prototype
-
-Session establishment
-
-0.3.0
-
-Video streaming prototype
-
-Basic input injection
-
-0.5.0
-
-Secure pairing layer
-
-Encrypted session transport
-
-1.0.0
-
-Production-grade low-latency remote control server
-
-Build Instructions
+## Build Instructions
 
 Run:
 
+```bash
 ./gradlew assembleDebug
+```
 
 Requirements:
 
-JDK 17+
+- JDK 17+
+- Android SDK (compileSdk 34)
 
-Android SDK (compileSdk 34)
+## Repository Structure
 
-Repository Structure
-
+```text
 SNDCPY/
-
-app/
-
-gradle/
-
-gradlew
-
-gradlew.bat
-
-settings.gradle
-
-build.gradle
-
-gradle.properties
-
-The repository includes a fully functional Gradle wrapper (8.7).
-
-Current Status
-
-Early-stage architectural foundation complete.
-
-The system is structured for production scalability. Core streaming and network implementation are the next development phase.
-
-Design Philosophy
-
-This project prioritizes:
-
-Explicit architecture
-
-Clean module boundaries
-
-Security-first design
-
-Deterministic builds
-
-Long-term maintainability
+├── app/
+│   └── src/main/java/com/example/remotecontrolserver/
+│       ├── discovery/
+│       ├── input/
+│       ├── runtime/
+│       ├── server/
+│       └── streaming/
+├── gradle/
+├── gradlew
+└── gradlew.bat
+```
